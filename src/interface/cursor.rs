@@ -1,8 +1,10 @@
+use crate::snake::Position;
+
 pub fn move_home(){
     println!("\x1B[H");
 }
-pub fn cursor_move(y: i16, x: i16) {
+pub fn cursor_move(pos: Position) {
     // y: Line
     // x: Columns
-    print!("\x1B[{y};{x}f");
+    print!("\x1B[{};{}f", pos.y, pos.x);
 }

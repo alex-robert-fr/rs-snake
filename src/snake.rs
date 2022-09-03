@@ -1,4 +1,4 @@
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone, Copy)]
 pub enum Direction {
     Up,
     Rigth,
@@ -6,24 +6,26 @@ pub enum Direction {
     Left,
 }
 
+#[derive(Clone, Copy, PartialEq)]
 pub struct Position {
     pub x: i16,
     pub y: i16,
 }
 
+#[derive(Clone)]
 pub struct Part {
     pub prev_pos: Position,
     pub current_pos: Position,
     pub next_pos: Position,
 }
 
+#[derive(Clone)]
 pub struct Snake {
     pub texture: String,
     pub speed: u8,
     pub life: u8,
     pub size: u8,
     pub direction: Direction,
-    pub pos: Position,
     pub parts: Vec<Part>,
 }
 
@@ -36,7 +38,6 @@ impl Snake {
             life,
             size,
             direction: Direction::Rigth,
-            pos: Position { x: 50, y: 5 },
             parts: Snake::reset(size),
         }
     }
@@ -66,19 +67,35 @@ impl Snake {
 
     pub fn change_direction(&mut self, direction: &Direction) {
         match direction {
-            Direction::Up => self.direction = Direction::Up,
-            Direction::Rigth => self.direction = Direction::Rigth,
-            Direction::Down => self.direction = Direction::Down,
-            Direction::Left => self.direction = Direction::Left,
+            Direction::Up => {
+                if self.direction != Direction::Down {
+                    self.direction = Direction::Up
+                }
+            },
+            Direction::Rigth => {
+                if self.direction != Direction::Left {
+                    self.direction = Direction::Rigth
+                }
+            },
+            Direction::Down => {
+                if self.direction != Direction::Up {
+                    self.direction = Direction::Down
+                }
+            },
+            Direction::Left => {
+                if self.direction != Direction::Rigth {
+                    self.direction = Direction::Left
+                }
+            },
         }
     }
 
-    pub fn forward(&mut self) {
-        match self.direction {
-            Direction::Up => self.pos.y -= 1,
-            Direction::Rigth => self.pos.x += 1,
-            Direction::Down => self.pos.y += 1,
-            Direction::Left => self.pos.x -= 1,
+    pub fn forward(dir: Direction, pos: Position) -> Position{
+        match dir {
+            Direction::Up => return Position {y: pos.y - 1, x: pos.x},
+            Direction::Rigth => return Position {y: pos.y, x: pos.x + 1},
+            Direction::Down => return Position {y: pos.y + 1, x: pos.x},
+            Direction::Left => return Position {y: pos.y, x: pos.x - 1},
         }
     }
 }

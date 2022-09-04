@@ -10,6 +10,7 @@ use crossterm::{
 };
 
 use crate::{
+    apple::Apple,
     interface::{cursor::cursor_move, screen::clear_all_screen},
     snake::{Direction, Position, Snake},
 };
@@ -17,13 +18,11 @@ use crate::{
 #[derive(PartialEq)]
 pub enum Actions {
     Direction(Direction),
-    Reset,
     Exit,
     None,
 }
 
 pub trait Engine {
-    fn start(game: &mut Game);
     fn process_input() -> Actions;
     fn update(game: &mut Game, input: &Actions);
     fn renderer(game: &mut Game);
@@ -33,17 +32,14 @@ pub trait Engine {
 pub struct Game {
     fps: u64,
     snake: Snake,
+    apple: Apple,
+    score: u16,
     term_size: (u16, u16),
-    action: Actions,
     exit: bool,
     reset: bool,
 }
 
 impl Engine for Game {
-    fn start(game: &mut Game) {
-        let mut snake = Snake::new("#", 1, 5);
-    }
-
     fn process_input() -> Actions {
         enable_raw_mode().unwrap();
         match poll(Duration::from_millis(0)) {
@@ -126,6 +122,10 @@ impl Engine for Game {
             game.exit = true;
         }
 
+        if game.apple.pos == (Position { x: 0, y: 0 }) {
+            game.apple.generate();
+        }
+
         match input {
             Actions::Direction(dir) => game.snake.change_direction(dir),
             _ => (),
@@ -144,7 +144,7 @@ impl Engine for Game {
         let snake = &mut game.snake;
         let mut i = 0;
         while i < snake.size.into() {
-            let part = &mut snake.parts;
+            let mut part = &mut snake.parts;
             part[i].current_pos = part[i].next_pos;
             part[i].next_pos = {
                 match i {
@@ -154,16 +154,25 @@ impl Engine for Game {
                         if head_part.x > x_max
                             || head_part.x < 0
                             || head_part.y > y_max
-                            || head_part.y < 0
+                            || head_part.y < 1
                         {
-                            snake.life -= 1;
+                            game.score += 1;
                             game.reset = true;
                         }
+
+                        //If touch apple
+                        if part[0].current_pos == game.apple.pos {
+                            game.score += 1;
+                            game.apple.pos = Position { x: 0, y: 0 };
+                            snake.size += 1;
+                            // part = Snake::reset(snake.size, &mut part[0].next_pos);
+                        }
+
                         // If touch yourself
                         let mut j = 1;
                         while j < snake.size.into() {
-                            if head_part == part[j].current_pos {
-                                snake.life -= 1;
+                            if head_part == part[j].current_pos && head_part != game.apple.pos {
+                                game.score += 1;
                                 game.reset = true;
                             }
                             j += 1;
@@ -180,6 +189,10 @@ impl Engine for Game {
     fn renderer(game: &mut Game) {
         clear_all_screen();
 
+        // Display Apple
+        cursor_move(game.apple.pos);
+        print!("{}", game.apple.texture);
+
         // Display Snake
         let snake = &mut game.snake;
         let mut i = 0;
@@ -190,8 +203,8 @@ impl Engine for Game {
             i += 1;
         }
 
-        cursor_move(Position { x: 100, y: 1 });
-        print!("Life: {}", snake.life);
+        cursor_move(Position { x: 100, y: 0 });
+        print!("Life: {}, Points: {}", snake.life, game.score);
 
         stdout().flush().unwrap();
     }
@@ -200,7 +213,6 @@ impl Engine for Game {
         let mut life = 5;
         'main: loop {
             let game = &mut Game::new(20, life);
-            Self::start(game);
             'game: loop {
                 let input = Self::process_input();
                 Self::update(game, &input);
@@ -226,123 +238,11 @@ impl Game {
         Game {
             fps,
             snake: Snake::new("#", 2, life),
+            apple: Apple::new("o"),
+            score: 0,
             term_size: size().unwrap(),
-            action: Actions::None,
             exit: false,
             reset: false,
         }
     }
-
-    // fn process_input() -> Actions {
-    //     enable_raw_mode().unwrap();
-    //     match poll(Duration::from_millis(100)) {
-    //         Ok(val) => {
-    //             if val {
-    //                 match read().unwrap() {
-    //                     // Exit Game
-    //                     Event::Key(KeyEvent {
-    //                         code: KeyCode::Char('q'),
-    //                         modifiers: KeyModifiers::NONE,
-    //                         kind: KeyEventKind::Press,
-    //                         state: KeyEventState::NONE,
-    //                     })
-    //                     | Event::Key(KeyEvent {
-    //                         code: KeyCode::Char('Q'),
-    //                         modifiers: KeyModifiers::SHIFT,
-    //                         kind: KeyEventKind::Press,
-    //                         state: KeyEventState::NONE,
-    //                     }) => {
-    //                         disable_raw_mode().unwrap();
-    //                         return Actions::Exit;
-    //                     }
-
-    //                     // Droite
-    //                     Event::Key(KeyEvent {
-    //                         code: KeyCode::Right,
-    //                         modifiers: KeyModifiers::NONE,
-    //                         kind: KeyEventKind::Press,
-    //                         state: KeyEventState::NONE,
-    //                     }) => {
-    //                         disable_raw_mode().unwrap();
-    //                         return Actions::Direction(Direction::Rigth);
-    //                     }
-
-    //                     // Gauche
-    //                     Event::Key(KeyEvent {
-    //                         code: KeyCode::Left,
-    //                         modifiers: KeyModifiers::NONE,
-    //                         kind: KeyEventKind::Press,
-    //                         state: KeyEventState::NONE,
-    //                     }) => {
-    //                         disable_raw_mode().unwrap();
-    //                         return Actions::Direction(Direction::Left);
-    //                     }
-
-    //                     // Haut
-    //                     Event::Key(KeyEvent {
-    //                         code: KeyCode::Up,
-    //                         modifiers: KeyModifiers::NONE,
-    //                         kind: KeyEventKind::Press,
-    //                         state: KeyEventState::NONE,
-    //                     }) => {
-    //                         disable_raw_mode().unwrap();
-    //                         return Actions::Direction(Direction::Up);
-    //                     }
-
-    //                     // Bas
-    //                     Event::Key(KeyEvent {
-    //                         code: KeyCode::Down,
-    //                         modifiers: KeyModifiers::NONE,
-    //                         kind: KeyEventKind::Press,
-    //                         state: KeyEventState::NONE,
-    //                     }) => {
-    //                         disable_raw_mode().unwrap();
-    //                         return Actions::Direction(Direction::Down);
-    //                     }
-
-    //                     _ => (),
-    //                 }
-    //             }
-    //         }
-    //         Err(_) => (),
-    //     }
-    //     disable_raw_mode().unwrap();
-    //     Actions::None
-    // }
-
-    // fn update(&mut self, event: &Actions) -> Actions {
-    //     if self.snake.life <= 0 {
-    //         return Actions::Exit;
-    //     }
-    //     match event {
-    //         Actions::Direction(dir) => self.snake.change_direction(dir),
-    //         Actions::None => (),
-    //         Actions::Exit => (),
-    //         Actions::Reset => self.snake.parts = Snake::reset(self.snake.size - 1),
-    //         _ => (),
-    //     }
-
-    //     let _x_max = match i16::try_from(self.term_size.0) {
-    //         Ok(val) => val,
-    //         Err(_) => panic!("Oups"),
-    //     };
-    //     let snake_x = self.snake.pos.x;
-    //     match snake_x {
-    //         snake_x if snake_x == 0 => self.snake.pos.x = _x_max,
-    //         snake_x if snake_x > _x_max => self.snake.pos.x = 0,
-    //         _ => (),
-    //     }
-    //     let _y_max = match i16::try_from(self.term_size.1) {
-    //         Ok(val) => val,
-    //         Err(_) => panic!("Oups"),
-    //     };
-    //     let snake_y = self.snake.pos.y;
-    //     match snake_y {
-    //         snake_y if snake_y == 0 => self.snake.pos.y = _y_max,
-    //         snake_y if snake_y > _y_max => self.snake.pos.y = 0,
-    //         _ => (),
-    //     }
-    //     self.snake.forward();
-    //     Actions::None
-    // }
 }

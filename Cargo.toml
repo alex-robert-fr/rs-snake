@@ -6,4 +6,4 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html5
 [dependencies]
 crossterm = "0.25.0"
-crossterm_input = "0.5.0"
+rand = "0.8.2"

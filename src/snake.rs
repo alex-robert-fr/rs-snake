@@ -31,19 +31,18 @@ pub struct Snake {
 
 impl Snake {
     pub fn new(tex: &str, speed: u8, life: u8) -> Snake {
-        let size = 11;
+        let size = 3;
         Snake {
             texture: tex.to_string(),
             speed,
             life,
             size,
             direction: Direction::Rigth,
-            parts: Snake::reset(size),
+            parts: Snake::reset(size, & mut Position { x: 50, y: 5 }),
         }
     }
 
-    pub fn reset(size: u8) -> Vec<Part> {
-        let mut initial_pos = Position { x: 50, y: 5 };
+    pub fn reset(size: u8, initial_pos: &mut Position) -> Vec<Part> {
         let mut parts: Vec<Part> = Vec::new();
         for _ in 0..size {
             parts.push(Part {

@@ -1,13 +1,10 @@
-use std::process;
+use game_engine::{Engine, Game};
 
-use game_engine::{Game, Engine};
-use snake::Snake;
-
+mod game_engine;
 mod interface;
 mod snake;
-mod game_engine;
+mod apple;
 
 fn main() {
-    process::Command::new("clear");
     Game::run();
 }

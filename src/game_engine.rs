@@ -30,13 +30,13 @@ pub trait Engine {
 }
 
 pub struct Game {
-    fps: u64,
-    snake: Snake,
-    apple: Apple,
-    score: u16,
-    term_size: (u16, u16),
-    exit: bool,
-    reset: bool,
+    pub fps: u64,
+    pub snake: Snake,
+    pub apple: Apple,
+    pub score: u16,
+    pub term_size: (u16, u16),
+    pub exit: bool,
+    pub reset: bool,
 }
 
 impl Engine for Game {
@@ -131,59 +131,8 @@ impl Engine for Game {
             _ => (),
         }
 
-        let x_max = match i16::try_from(game.term_size.0) {
-            Ok(val) => val,
-            Err(_) => panic!("Oups"),
-        };
-        let y_max = match i16::try_from(game.term_size.1) {
-            Ok(val) => val,
-            Err(_) => panic!("Oups"),
-        };
-
-        // Calcule snake position
-        let snake = &mut game.snake;
-        let mut i = 0;
-        while i < snake.size.into() {
-            let mut part = &mut snake.parts;
-            part[i].current_pos = part[i].next_pos;
-            part[i].next_pos = {
-                match i {
-                    0 => Snake::forward(snake.direction, {
-                        // If exit screen
-                        let head_part = part[0].current_pos;
-                        if head_part.x > x_max
-                            || head_part.x < 0
-                            || head_part.y > y_max
-                            || head_part.y < 1
-                        {
-                            game.score += 1;
-                            game.reset = true;
-                        }
-
-                        //If touch apple
-                        if part[0].current_pos == game.apple.pos {
-                            game.score += 1;
-                            game.apple.pos = Position { x: 0, y: 0 };
-                            snake.size += 1;
-                            // part = Snake::reset(snake.size, &mut part[0].next_pos);
-                        }
-
-                        // If touch yourself
-                        let mut j = 1;
-                        while j < snake.size.into() {
-                            if head_part == part[j].current_pos && head_part != game.apple.pos {
-                                game.score += 1;
-                                game.reset = true;
-                            }
-                            j += 1;
-                        }
-                        part[0].current_pos
-                    }),
-                    _ => part[i - 1].current_pos,
-                }
-            };
-            i += 1;
-        }
+        game.snake.calc_pos();
+        Snake::verify_pos(game);
     }
 
     fn renderer(game: &mut Game) {

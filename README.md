@@ -43,4 +43,6 @@ cargo run --release
  <br/>
  <br/>
 
- <img src="./img/cat-space.gif" alt="Profile Picture" style="width:100px;border-radius:500px;position:absolute;left:50%;transform:translateX(-50%);" />
+ <p align="center">
+    <img src="./img/round-cat-space.gif" alt="Salut" height="200"/>
+</p>

@@ -36,9 +36,9 @@ cargo run --release
 
 
  ## Licence / *License*
- `rs-snake` est sous licence MIT. Voir LICENSE pour plus d'informations.
+ `rs-snake` est sous licence GPL-3.0. Voir LICENSE pour plus d'informations.
 
- *`rs-snake` is licensed under MIT. See LICENSE for more details.*
+ *`rs-snake` is licensed under GPL-3.0. See LICENSE for more details.*
 
  <br/>
  <br/>
